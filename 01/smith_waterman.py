@@ -1,9 +1,13 @@
 import argparse
 import numpy as np
+from Bio.SubsMat.MatrixInfo import blosum50
 
 
 class SmithWaterman:
     grid = None
+    high = 0
+    high_pos = None
+    traces = None
 
     sequence_a = None
     sequence_b = None
@@ -26,13 +30,20 @@ class SmithWaterman:
         for i in range(len(sequence_b) + 1):
             self.grid[0][i] = GridCell(0)
 
+    def search_matrix(self, char1, char2):
+        pair = (char1, char2)
+
+        if pair not in blosum50:
+            return blosum50[(tuple(reversed(pair)))]
+        return blosum50[pair]
+
     def solve(self):
         for j in range(1, len(self.sequence_b) + 1):
             for i in range(1, len(self.sequence_a) + 1):
                 surrounding = []
 
-                surrounding.append(((i-1, j-1), self.grid[i-1][j-1].value + (
-                    3 if self.sequence_a[i-1] == self.sequence_b[j-1] else 1)))  # TODO exchange for BLOSUM 50 matrix
+                surrounding.append(((i-1, j-1), self.grid[i-1][j-1].value + self.search_matrix(
+                    self.sequence_a[i-1], self.sequence_b[j-1])))
 
                 surrounding.append(
                     ((i-1, j), self.grid[i-1][j].value - self.gap_pen))
@@ -40,37 +51,38 @@ class SmithWaterman:
                 surrounding.append(
                     ((i, j-1), self.grid[i][j-1].value - self.gap_pen))
 
-                high = 0
+                value = 0
 
                 for cell in surrounding:
-                    high = max(high, cell[1])
+                    value = max(value, cell[1])
 
-                arrows = [i for i, j in surrounding if j == high]
+                arrows = [i for i, j in surrounding if j == value]
 
-                if high == 0:
+                if value <= 0:
                     self.grid[i][j] = GridCell()
 
                 else:
-                    self.grid[i][j] = GridCell(high, arrows)
+                    self.grid[i][j] = GridCell(value, arrows)
 
-                if high > self.high:
+                if value > self.high:
                     self.high_pos = [(i, j)]
-                    self.high = high
+                    self.high = value
 
-                elif high == self.high:
-                    self.high_pos.append([(i, j)])
-
-        print(self.grid)
-        print(self.high)
-        print(self.high_pos)
+                elif value == self.high and value != 0:
+                    self.high_pos.append((i, j))
 
     def traceback(self):
+        if self.traces:
+            return self.traces
+
         results = list()
 
         for pos in self.high_pos:
-            results.append(self.traceback_from(pos))
+            results += self.traceback_from(pos)
 
-        print(results)
+        self.traces = results
+
+        return self.traces
 
     def traceback_from(self, pos):
         traces = []
@@ -152,4 +164,5 @@ if __name__ == "__main__":
 
     sw.solve()
 
-    sw.traceback()
+    traces = sw.traceback()
+    print(traces)
