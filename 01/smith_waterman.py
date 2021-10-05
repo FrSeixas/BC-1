@@ -1,5 +1,4 @@
 import argparse
-from typing import Sequence
 import numpy as np
 
 
@@ -14,6 +13,9 @@ class SmithWaterman:
         self.sequence_a = sequence_a
         self.sequence_b = sequence_b
         self.gap_pen = gap_pen
+
+        self.high = 0
+        self.high_pos = None
 
         self.grid = np.empty(
             (len(sequence_a) + 1, len(sequence_b) + 1), dtype=GridCell)
@@ -41,29 +43,65 @@ class SmithWaterman:
                 high = 0
 
                 for cell in surrounding:
-                    high = high if cell[1] <= high else cell[1]
+                    high = max(high, cell[1])
 
                 arrows = [i for i, j in surrounding if j == high]
 
                 if high == 0:
-                    self.grid[i][j] = GridCell(high)
+                    self.grid[i][j] = GridCell()
 
                 else:
                     self.grid[i][j] = GridCell(high, arrows)
 
+                if high > self.high:
+                    self.high_pos = [(i, j)]
+                    self.high = high
+
+                elif high == self.high:
+                    self.high_pos.append([(i, j)])
+
         print(self.grid)
+        print(self.high)
+        print(self.high_pos)
+
+    def traceback(self):
+        results = list()
+
+        for pos in self.high_pos:
+            results.append(self.traceback_from(pos))
+
+        print(results)
+
+    def traceback_from(self, pos):
+        traces = []
+
+        if not pos:
+            return []
+
+        cell = self.grid[pos[0]][pos[1]]
+
+        if cell.arrows:
+            for previous in cell.arrows:
+                recurs_traces = self.traceback_from(previous)
+                if recurs_traces:
+                    traces += [[pos] + i for i in recurs_traces]
+
+            return traces
+
+        else:
+            return [[pos]]
 
 
 class GridCell:
     arrows = None
     value = None
 
-    def __init__(self, value, arrows=None) -> None:
+    def __init__(self, value=0, arrows=None) -> None:
         self.arrows = arrows
         self.value = value
 
     def __repr__(self):
-        return f"Cell:<{self.arrows}, {self.value}>"
+        return f"{self.arrows}"
 
 
 def read_file_content(file):
@@ -106,8 +144,12 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    penalty, seq1, seq2 = parse_args()
-
+    # penalty, seq1, seq2 = parse_args()
+    seq1 = "TECTEA"
+    seq2 = "CCTEC"
+    penalty = 1
     sw = SmithWaterman(penalty if penalty else 1, seq1, seq2)
 
     sw.solve()
+
+    sw.traceback()
