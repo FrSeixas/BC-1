@@ -150,10 +150,8 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    # penalty, seq1, seq2 = parse_args()
-    seq1 = "TECTEA"
-    seq2 = "CCTEC"
-    penalty = 1
+    penalty, seq1, seq2 = parse_args()
+
     sw = SmithWaterman(penalty if penalty else 1, seq1, seq2)
 
     sw.solve()
