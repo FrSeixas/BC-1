@@ -18,9 +18,6 @@ class SmithWaterman:
         self.sequence_b = sequence_b
         self.gap_pen = gap_pen
 
-        self.high = 0
-        self.high_pos = None
-
         self.grid = np.empty(
             (len(sequence_a) + 1, len(sequence_b) + 1), dtype=GridCell)
 
@@ -30,7 +27,7 @@ class SmithWaterman:
         for i in range(len(sequence_b) + 1):
             self.grid[0][i] = GridCell(0)
 
-    def search_matrix(self, char1, char2):
+    def search_blosum50(self, char1, char2):
         pair = (char1, char2)
 
         if pair not in blosum50:
@@ -42,7 +39,7 @@ class SmithWaterman:
             for i in range(1, len(self.sequence_a) + 1):
                 surrounding = []
 
-                surrounding.append(((i-1, j-1), self.grid[i-1][j-1].value + self.search_matrix(
+                surrounding.append(((i-1, j-1), self.grid[i-1][j-1].value + self.search_blosum50(
                     self.sequence_a[i-1], self.sequence_b[j-1])))
 
                 surrounding.append(
@@ -58,11 +55,8 @@ class SmithWaterman:
 
                 arrows = [i for i, j in surrounding if j == value]
 
-                if value <= 0:
-                    self.grid[i][j] = GridCell()
-
-                else:
-                    self.grid[i][j] = GridCell(value, arrows)
+                self.grid[i][j] = GridCell(
+                    value, arrows) if value else GridCell()
 
                 if value > self.high:
                     self.high_pos = [(i, j)]
