@@ -64,6 +64,8 @@ class SmithWaterman:
 
                 elif value == self.high and value != 0:
                     self.high_pos.append((i, j))
+        #print(self.grid)
+        print(self.high)
 
     def traceback(self):
         if self.traces:
@@ -75,7 +77,6 @@ class SmithWaterman:
             results += self.traceback_from(pos)
 
         self.traces = results
-
         return self.traces
 
     def traceback_from(self, pos):
@@ -107,7 +108,7 @@ class GridCell:
         self.value = value
 
     def __repr__(self):
-        return f"{self.arrows}"
+            return f"{self.value}"
 
 
 def read_file_content(file):
@@ -157,4 +158,16 @@ if __name__ == "__main__":
     sw.solve()
 
     traces = sw.traceback()
-    print(traces)
+    str1 = []
+    for i in traces:
+        for j in i:
+            if sw.grid[j[0]][j[1]].value > 0:
+                str1.append(seq1[j[0]-1])
+        print(str1)
+        print("-------------")
+        print(str1)
+        print("\n")
+        str1 = [] 
+                
+
+    #print(traces)
